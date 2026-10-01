@@ -1,0 +1,307 @@
+{
+  "name": "n8n-jira",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "0b22f6ec-17da-4622-843e-0a835858fb0b",
+      "name": "When clicking ‘Execute workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -544,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "3e230dee-d20e-805d-a1d7-000b558a915d",
+          "mode": "list",
+          "cachedResultName": "Tasks Tracker",
+          "cachedResultUrl": "https://app.notion.com/p/3e230deed20e80b4b0a9d334c595f859"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "2cdbcf95-783f-4a50-beef-45a8d4a3d8d1",
+      "name": "Get existing Notion pages",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        -320,
+        -176
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "notionApi": {
+          "id": "ph6ZLYXBBkWTxM3i",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "has-page-id",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "812c9010-6a1a-4858-9e0a-67b08eb1088e",
+      "name": "Has Notion page to clear?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -96,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/pages/{{ $json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": {
+          "archived": true
+        },
+        "options": {}
+      },
+      "id": "a6af0ff4-f044-415c-808c-efbfa0628582",
+      "name": "Archive existing Notion page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        128,
+        -256
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "ph6ZLYXBBkWTxM3i",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jiraVersion": "serverPat",
+        "operation": "getAll",
+        "options": {
+          "jql": "project = NEWBE AND component in (\"Team BOOKemon\",none) AND status in (Closed,Done) AND type in (Story,\"Defect (Agile)\",Defect,Task) AND (fixVersion is EMPTY OR fixVersion in (\"Release 8.y\"))"
+        }
+      },
+      "id": "f288e295-6afa-4878-884b-ea5b5b5745c3",
+      "name": "Get many issues",
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        352,
+        -176
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "jiraSoftwareServerPatApi": {
+          "id": "2S9OWOnxnuh6WDYW",
+          "name": "Jira SW Server (PAT) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "3e230dee-d20e-805d-a1d7-000b558a915d",
+          "mode": "list",
+          "cachedResultName": "Tasks Tracker",
+          "cachedResultUrl": "https://app.notion.com/p/3e230deed20e80b4b0a9d334c595f859"
+        },
+        "title": "={{ $json.key }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "URL|url",
+              "urlValue": "=https://trackspace.lhsystems.com/browse/{{ $json.key }}",
+              "ignoreIfEmpty": true
+            },
+            {
+              "key": "Description|rich_text",
+              "textContent": "={{ $json.fields.summary }}"
+            },
+            {
+              "key": "Status|status",
+              "statusValue": "={{ $json.fields.status.name }}"
+            },
+            {
+              "key": "Issue Type|rich_text",
+              "textContent": "={{ $json.fields.issuetype.name }}"
+            },
+            {
+              "key": "Component|rich_text",
+              "textContent": "={{\n  $json.fields.components.pluck(\"name\").includes(\"Backend\",\"backend\") ? \"Backend\" :\n  $json.fields.components.pluck(\"name\").includes(\"Frontend\",\"frondend\") ? \"Frontend\" :\n  \"None\"\n}}"
+            }
+          ]
+        },
+        "blockUi": {
+          "blockValues": []
+        },
+        "options": {}
+      },
+      "id": "de9b84b3-c0fd-4d92-8bc9-d71ba6541202",
+      "name": "Create a database page",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        576,
+        -176
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "ph6ZLYXBBkWTxM3i",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "61c95ae6-d5e5-4374-8f85-54e89a7928bf",
+      "name": "Every hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -544,
+        16
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get existing Notion pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get existing Notion pages": {
+      "main": [
+        [
+          {
+            "node": "Has Notion page to clear?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Notion page to clear?": {
+      "main": [
+        [
+          {
+            "node": "Archive existing Notion page",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get many issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Archive existing Notion page": {
+      "main": [
+        [
+          {
+            "node": "Get many issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many issues": {
+      "main": [
+        [
+          {
+            "node": "Create a database page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every hour": {
+      "main": [
+        [
+          {
+            "node": "Get existing Notion pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "b7693f42-40e3-4d02-b05b-c7a6d288d801",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f72a888601b9702723586d73c2909121d8014c2b5ee945684270b6f985f9f754"
+  },
+  "nodeGroups": [],
+  "id": "qBgDNslzZUtbkycp",
+  "tags": []
+}

@@ -1,0 +1,403 @@
+{
+  "name": "CBP Epics - Story Points by Epic",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "id": "a1052a74-6c6f-4091-87a8-224d091ee77d",
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -576,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "92d30dee-d20e-82e0-9e11-07eb69c50f20",
+          "mode": "list",
+          "cachedResultName": "Epic Tracker",
+          "cachedResultUrl": "https://app.notion.com/p/3ec30deed20e8031b73af6d93dfa1a85"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "583793c6-da1e-4515-9b51-fc4862cb5373",
+      "name": "Get many database pages",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        -352,
+        -160
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "notionApi": {
+          "id": "ph6ZLYXBBkWTxM3i",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e5ffaa13-fcbf-425d-8e4f-8d2ec7a44c86",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9f6575ba-dc82-4fa5-8ff0-96f9e6a278e8",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -128,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "jiraVersion": "serverPat",
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {
+          "fields": "key,summary,issuetype,customfield_10002,customfield_10008,customfield_10070",
+          "jql": "project = NEWBE AND component = \"Team BOOKemon\" AND Type = Epic AND assignee = U776856 AND issue != NEWBE-1000874 AND issue != NEWBE-1007173"
+        }
+      },
+      "id": "5e6990f5-c251-47a0-860a-5c4e1cd9d6e8",
+      "name": "Jira - Search issues",
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        544,
+        -160
+      ],
+      "credentials": {
+        "jiraSoftwareServerPatApi": {
+          "id": "2S9OWOnxnuh6WDYW",
+          "name": "Jira SW Server (PAT) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jiraVersion": "serverPat",
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {
+          "jql": "=\"Epic Link\" =  {{ $json.key }}"
+        }
+      },
+      "id": "3ffb756d-d28d-4f59-bf3e-134869480fae",
+      "name": "Get many issues",
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        992,
+        -240
+      ],
+      "credentials": {
+        "jiraSoftwareServerPatApi": {
+          "id": "2S9OWOnxnuh6WDYW",
+          "name": "Jira SW Server (PAT) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n\n\n\nvar sum=0;\nconst items = $input.all();\nconst outputItems = [];\nfor (const item of items) {\n  sum += item.json.fields['customfield_10233'] ?? 0;\n}\n\n  outputItems.push({\n    json: {\n      originalKey: $('Loop Over Items').first().json.key,\n      originalDesc: $('Loop Over Items').first().json.fields.summary,\n      totalStoryPoints: sum,\n      originalStatus:$('Loop Over Items').first().json.fields.customfield_10070,\n      originalURL:\"https://trackspace.lhsystems.com/browse/\"+$('Loop Over Items').first().json.key\n    }\n  });\nreturn outputItems"
+      },
+      "id": "0fc2bda8-1e50-4aaf-9a17-929b2bb1e88b",
+      "name": "Code in JavaScript",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "92d30dee-d20e-82e0-9e11-07eb69c50f20",
+          "mode": "list",
+          "cachedResultName": "Epic Tracker",
+          "cachedResultUrl": "https://app.notion.com/p/3ec30deed20e8031b73af6d93dfa1a85"
+        },
+        "title": "Epic Tracker",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Epic ID|title",
+              "type": "title",
+              "title": "={{ $json.originalKey }}"
+            },
+            {
+              "key": "Epic Name|rich_text",
+              "type": "rich_text",
+              "textContent": "={{ $json.originalDesc }}"
+            },
+            {
+              "key": "Story Points|number",
+              "type": "number",
+              "numberValue": "={{ $json.totalStoryPoints }}"
+            },
+            {
+              "key": "Status|status",
+              "type": "status",
+              "statusValue": "={{ $json.originalStatus }}"
+            },
+            {
+              "key": "URL|url",
+              "type": "url",
+              "urlValue": "={{ $json.originalURL }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "736ec4d2-ba5c-450f-a815-5784121c49af",
+      "name": "Create a database page",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1440,
+        -160
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "ph6ZLYXBBkWTxM3i",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "816cf5da-8b6b-4974-b0ae-fdcd0829a744",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        768,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/pages/{{ $json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"archived\": true}",
+        "options": {}
+      },
+      "id": "436d745e-94b4-4d62-ac18-358c040d5427",
+      "name": "Purge Notion Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        96,
+        -240
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "ph6ZLYXBBkWTxM3i",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        320,
+        -240
+      ],
+      "id": "fdde77a3-ec66-4939-bad0-6b393dc11364",
+      "name": "Wait",
+      "webhookId": "2d8f0c5b-bf4c-43c4-9f8a-dc2d1038e863",
+      "alwaysOutputData": false,
+      "executeOnce": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Get many database pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many database pages": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Purge Notion Content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Jira - Search issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jira - Search issues": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many issues": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Create a database page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a database page": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get many issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Purge Notion Content": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Jira - Search issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4b10241a-e005-4cbd-9907-e440e594c94f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f72a888601b9702723586d73c2909121d8014c2b5ee945684270b6f985f9f754"
+  },
+  "nodeGroups": [],
+  "id": "FLxJzR28wbHqAnfm",
+  "tags": []
+}
